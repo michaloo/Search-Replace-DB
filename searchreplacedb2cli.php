@@ -24,6 +24,7 @@ $shortopts .= "p:"; // password // $pass
 $shortopts .= "c:"; // character set // $char
 $shortopts .= "s:"; // search // $srch
 $shortopts .= "r:"; // replace // $rplc
+$shortopts .= "e:"; // exclude // $exclude
 $shortopts .= ""; // These options do not accept values
 
 // All long options require values
@@ -35,6 +36,7 @@ $longopts  = array(
     "charset:", // $char
     "search:", // $srch
     "replace:", // $rplc
+    "exclude-tables:", //$exclude
     "help", // $help_text
     //@TODO write dry-run to also do a search without a replace.
     "dry-run", // engage in a dry run, print options, show results
@@ -88,6 +90,12 @@ if (isset($options["r"])){
 elseif(isset($options["replace"])){
   $rplc = $options["replace"];}
 
+if (isset($options["e"])){
+  $exclude = $options["e"];}
+elseif(isset($options["exclude-tables"])){
+  $exclude = $options["exclude-tables"];}
+
+
 /* Show values if this is a dry-run */
 if (isset($options["dry-run"])){
 echo "Are you sure these are correct?\n";
@@ -99,6 +107,7 @@ echo "pass: ".$pass."\n";
 echo "charset: ".$char."\n";
 echo "search: ".$srch."\n";
 echo "replace: ".$rplc."\n\n";
+echo "exclude-tables: ".$exclude."\n\n";
 
 /* Reproduce what's done in Case 3 to test the server before proceeding */
         $connection = @mysql_connect( $host, $user, $pass );
@@ -133,11 +142,20 @@ echo "replace: ".$rplc."\n\n";
                         echo $a_table . ", ";
                 }
         }
+ 
+$tables = $all_tables;
+ 
+//excluding tables using shell wildcard pattern
+function exclude_tablename($table) {
+    global $exclude;
+    return !fnmatch($exclude, $table);
+}
+
+$tables = array_filter($tables, 'exclude_tablename');
 
 /**
- * @TODO allow selection of one or more tables. For now, use all.
+ * @TODO add table include pattern
  */
-$tables = $all_tables;
 
 /* Execute Case 5 with the actual search + replace */
 
